@@ -15,10 +15,10 @@ for i in circles[0, :]:
     # draw the centre of the circle
     cv.circle(img, centre, 2, (0, 0, 255), 3)
 
-#centres = [(i[0],i[1]) for i in circles [0,:]]
+# centres = [(i[0],i[1]) for i in circles [0,:]]
 
-#for centre in centres:
-    #print(centre)
+# for centre in centres:
+# print(centre)
 
 cv.imshow('detected circles', img)
 cv.waitKey(0)

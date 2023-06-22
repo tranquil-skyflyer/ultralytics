@@ -11,8 +11,8 @@ def angle(xy):
 
 
 model = YOLO('../runs/detect/train/weights/best.pt')
-results = model('testing_dataset/t4.jpg')
-img = cv.imread('testing_dataset/t4.jpg')
+results = model('testing_dataset/t13.jpg')
+img = cv.imread('testing_dataset/t13.jpg')
 
 boxes = results[0].boxes.cpu().numpy()
 box = boxes[0]
@@ -21,10 +21,17 @@ coord = box.xyxy[0].astype(int)
 x1, y1, x2, y2 = coord[1], coord[3], coord[0], coord[2]
 crop = img[x1:y1, x2:y2]
 
+
+h, w, c = crop.shape
+if w < 180 and h < 180:
+    while w < 180 and h < 180:
+        crop = cv.resize(crop, None, fx=1.2, fy=1.2)
+        h, w, c = crop.shape
+
 crop = cv.medianBlur(crop, 5)
 grey = cv.cvtColor(crop, cv.COLOR_BGR2GRAY)
 # grey = cv.addWeighted(grey, 1 + 200 / 127, grey, 0, 225 - 200)
-grey = cv.convertScaleAbs(grey, alpha=4.25, beta=25)
+grey = cv.convertScaleAbs(grey, alpha=4.25, beta=15)
 
 mask = np.zeros(grey.shape[:2], dtype=np.uint8)
 mask[:grey.shape[0]*2//3:, :] = 255
@@ -32,7 +39,8 @@ mask[:grey.shape[0]*2//3:, :] = 255
 result = cv.bitwise_and(grey, grey, mask=mask)
 
 cv.imshow('new', result)
-circles = cv.HoughCircles(result, cv.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=15, maxRadius=30)
+
+circles = cv.HoughCircles(result, cv.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=15, maxRadius=40)
 
 circles = np.uint16(np.around(circles))
 for i in circles[0, :]:
