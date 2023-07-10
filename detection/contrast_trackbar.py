@@ -13,7 +13,7 @@ def update_brightness_contrast(brightness=0, contrast=0):
 
 
     circles = cv.HoughCircles(grey, cv.HOUGH_GRADIENT, 1, 20,
-                              param1=50, param2=30, minRadius=15, maxRadius=30)
+                              param1=50, param2=30, minRadius=5, maxRadius=30)
 
     if circles is not None:
         circles = np.uint16(np.around(circles))
@@ -27,10 +27,10 @@ def update_brightness_contrast(brightness=0, contrast=0):
     cv.imshow('edit', grey)
 
 
-model = YOLO('runs/detect/train/weights/best.pt')
+model = YOLO('../runs/detect/train/weights/best.pt')
 # source = 'testing_dataset/t10.jpg'
-results = model('testing_dataset/t5.jpg')
-img = cv.imread('testing_dataset/t5.jpg')
+results = model('testing_dataset/k.jpg')
+img = cv.imread('testing_dataset/k.jpg')
 
 boxes = results[0].boxes.cpu().numpy()
 box = boxes[0]

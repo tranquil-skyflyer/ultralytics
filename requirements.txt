@@ -46,3 +46,4 @@ ultralytics~=8.0.119
 numpy~=1.23.5
 setuptools~=44.0.0
 thop~=0.1.1.post2209072238
+pyrealsense2~=2.54.1.5217
