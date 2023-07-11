@@ -14,7 +14,7 @@ def circle(img):
 
     img = cv.medianBlur(img, 5)
     grey = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    grey = cv.convertScaleAbs(grey, alpha=4.25, beta=20)
+    grey = cv.convertScaleAbs(grey, alpha=4.25, beta=15)
     mask = np.zeros(grey.shape[:2], dtype=np.uint8)
     mask[:grey.shape[0] * 2 // 3:, :] = 255
 

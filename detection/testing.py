@@ -11,8 +11,8 @@ def angle(xy):
 
 
 model = YOLO('../runs/detect/train/weights/best.pt')
-results = model('testing_dataset/b.jpg')  # issues: not detecting circles for t13.jpg
-img = cv.imread('testing_dataset/b.jpg')
+results = model('testing_dataset/c.jpg')  # issues: not detecting circles for t13.jpg
+img = cv.imread('testing_dataset/c.jpg')
 
 boxes = results[0].boxes.cpu().numpy()
 box = boxes[0]
@@ -32,38 +32,71 @@ if w < 180 and h < 180:
 grey = cv.cvtColor(crop, cv.COLOR_BGR2GRAY)
 # grey = cv.addWeighted(grey, 1 + 200 / 127, grey, 0, 225 - 200)
 grey = cv.convertScaleAbs(grey, alpha=4.25, beta=10)
-grey = cv.medianBlur(grey, 7)
-
-mask = np.zeros(grey.shape[:2], dtype=np.uint8)
-mask[:grey.shape[0]*2//3:, :] = 255
-
-grey = cv.bitwise_and(grey, grey, mask=mask)
-
+grey = cv.medianBlur(grey, 5)
+#
+# mask = np.zeros(grey.shape[:2], dtype=np.uint8)
+# mask[:grey.shape[0]*2//3:, :] = 255
+#
+# grey = cv.bitwise_and(grey, grey, mask=mask)
+#
 # cv.imshow('new', grey)
 
 circles = cv.HoughCircles(grey, cv.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=18, maxRadius=40)
-
+centres = []
 # circles = np.int16(np.around(circles))
 if circles is not None:
     circles = np.int16(np.around(circles))
     # circles = np.round(circles[0, :]).astype(int)
     for i in circles[0, :]:
         centre = (i[0], i[1])
-        print(centre)
+        centres.append((i[0], i[1]))
+
         # draw the outer circle
         cv.circle(crop, centre, i[2], (0, 255, 0), 2)
         # draw the centre of the circle
         cv.circle(crop, centre, 2, (0, 0, 255), 3)
+
 else:
     print("hi")
 
+print(centres)
+cv.imshow('detected circles', crop)
 
-circles = np.round(circles[0, :]).astype(int)
-# centre = (circles[0][0], circles[0][1])
-# centre1 = (circles[1][0], circles[1][1])
-vector = (circles[1][0] - circles[0][0], -(circles[1][1]-circles[0][1]))
-print(angle(vector))
+distances = set()
+for i in centres:
+    for j in centres:
+        distances.add(math.dist(i, j))
 
-# cv.imshow('detected circles', crop)
-# cv.waitKey(0)
-# cv.destroyAllWindows()
+print(min(distances))
+
+# circles = np.round(circles[0, :]).astype(int)
+# c1 = (circles[0][0], circles[0][1])
+# c2 = (circles[1][0], circles[1][1])
+# if circles[2] is not None:
+#     c3 = (circles[2][0], circles[2][1])
+# vector = (circles[1][0] - circles[0][0], -(circles[1][1]-circles[0][1]))
+# print(angle(vector))
+
+# d1 = math.dist(c1, c2)
+# d2 = math.dist(c1, c3)
+# d3 = math.dist(c2, c3)
+
+
+
+# cx1, cy1 = circles[0][0], circles[0][1]
+# cx2, cy2 = circles[1][0], circles[1][1]
+# cx3, cy3 = circles[2][0], circles[2][1]
+#
+# d1 = (cx2 - cx1, (cy1 - cy2))
+# d2 = (cx3 - cx1, (cy1 - cy3))
+# d3 = (cx3 - cx2, (cy2 - cy3))
+# distances = {d1, d2, d3}
+# print(min(distances))
+# a = angle(min(distances))
+
+
+# print(a)
+
+
+cv.waitKey(0)
+cv.destroyAllWindows()
