@@ -4,15 +4,20 @@ import cv2 as cv
 from ultralytics import YOLO
 
 
-def angle(xy):
-    a = xy[1]/xy[0]
-    theta = math.atan(a)
+def angle(points):
+    pt1, pt2 = points
+    x1, y1 = pt1
+    x2, y2 = pt2
+    dx = pt2[0] - pt1[0]
+    dy = -(pt2[1] - pt1[1])
+    theta = math.atan(dy/dx)
+    # theta = math.atan2(pt2[1]-pt1[1], pt2[0]-pt1[0])
     return theta
 
 
 model = YOLO('../runs/detect/train/weights/best.pt')
-results = model('testing_dataset/c.jpg')  # issues: not detecting circles for t13.jpg
-img = cv.imread('testing_dataset/c.jpg')
+results = model('testing_dataset/n.jpg')
+img = cv.imread('testing_dataset/n.jpg')
 
 boxes = results[0].boxes.cpu().numpy()
 box = boxes[0]
@@ -55,19 +60,26 @@ if circles is not None:
         cv.circle(crop, centre, i[2], (0, 255, 0), 2)
         # draw the centre of the circle
         cv.circle(crop, centre, 2, (0, 0, 255), 3)
-
 else:
-    print("hi")
+    print('hi')
 
 print(centres)
 cv.imshow('detected circles', crop)
 
-distances = set()
-for i in centres:
-    for j in centres:
-        distances.add(math.dist(i, j))
+# distances = set()
+min_dist = float('inf')
+for i in range(len(centres)):
+    for j in range(i+1, len(centres)):
+        dist = math.dist(centres[i], centres[j])
+        if dist < min_dist:
+            min_dist = dist
+            closest_pts = (centres[i], centres[j])
 
-print(min(distances))
+print(closest_pts)
+print(angle(closest_pts))
+
+
+# print(min(distances))
 
 # circles = np.round(circles[0, :]).astype(int)
 # c1 = (circles[0][0], circles[0][1])

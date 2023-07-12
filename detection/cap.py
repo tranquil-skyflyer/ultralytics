@@ -14,31 +14,34 @@ def circle(img):
 
     img = cv.medianBlur(img, 5)
     grey = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    grey = cv.convertScaleAbs(grey, alpha=4.25, beta=15)
-    mask = np.zeros(grey.shape[:2], dtype=np.uint8)
-    mask[:grey.shape[0] * 2 // 3:, :] = 255
+    # grey = cv.convertScaleAbs(grey, alpha=4.5, beta=20)
 
-    grey = cv.bitwise_and(grey, grey, mask=mask)
-    circles = cv.HoughCircles(grey, cv.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=18, maxRadius=40)
+    centres = []
+    circles = cv.HoughCircles(grey, cv.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=10, maxRadius=35)
     if circles is not None:
-        circles = np.round(circles[0, :]).astype(int)
-        # print(len(circles))
+        circles = np.int16(np.around(circles))
+        for i in circles[0, :]:
+            centres.append((i[0], i[1]))
+
+    return centres
+
+def distances(coords):
+    min_dist = float('inf')
+    closest_pts = ()
+    for i in range(len(coords)):
+        for j in range(i + 1, len(coords)):
+            dist = math.dist(coords[i], coords[j])
+            if dist < min_dist:
+                min_dist = dist
+                closest_pts = (coords[i], coords[j])
+    return closest_pts
 
 
-        if len(circles) == 2:
-            cx1 = circles[0][0]
-            cy1 = circles[0][1]
-            cx2 = circles[1][0]
-            cy2 = circles[1][1]
-            vector = (cx2 - cx1, -(cy2 - cy1))
-            return vector
-    else:
-        return None
-
-
-def angle(xy):
-    a = xy[1] / xy[0]
-    theta = math.atan(a)
+def angle(points):
+    pt1, pt2 = points
+    dx = pt2[0] - pt1[0]
+    dy = -(pt2[1] - pt1[1])
+    theta = math.atan(dy / dx)
     return theta
 
 
@@ -72,10 +75,13 @@ while True:
         coord = box.xyxy[0].astype(int)
         x1, y1, x2, y2 = coord[1], coord[3], coord[0], coord[2]
         crop = colour_image[x1:y1, x2:y2]
-        vec = circle(crop)
-        if vec is not None:
+        ctr = circle(crop)
+        print(ctr)
+        if len(ctr) > 1:
             print('success!')
-            ang = round(angle(vec), 4)
+            d = distances(ctr)
+            ang = round(angle(d), 4)
+            print(ang)
             annotated_frame = cv.putText(annotated_frame, str(ang), (50, 50), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
 
     else:
@@ -84,8 +90,6 @@ while True:
     cv.namedWindow('RealSense', cv.WINDOW_AUTOSIZE)
     cv.imshow('Realsense', annotated_frame)
     cv.waitKey(1)
-
-
 
 # TODO:
 #  need to figure out how to stream all frames but only detect every other frame
