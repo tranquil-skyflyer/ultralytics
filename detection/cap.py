@@ -14,16 +14,18 @@ def circle(img):
 
     img = cv.medianBlur(img, 5)
     grey = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    # grey = cv.convertScaleAbs(grey, alpha=4.5, beta=20)
+    grey = cv.convertScaleAbs(grey, alpha=4.5, beta=20)
 
     centres = []
-    circles = cv.HoughCircles(grey, cv.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=10, maxRadius=35)
+    circles = cv.HoughCircles(grey, cv.HOUGH_GRADIENT, 1.2, grey.shape[0] / 4, param1=50, param2=30, minRadius=10,
+                              maxRadius=35)
     if circles is not None:
         circles = np.int16(np.around(circles))
         for i in circles[0, :]:
             centres.append((i[0], i[1]))
 
     return centres
+
 
 def distances(coords):
     min_dist = float('inf')
@@ -42,7 +44,13 @@ def angle(points):
     dx = pt2[0] - pt1[0]
     dy = -(pt2[1] - pt1[1])
     theta = math.atan(dy / dx)
-    return theta
+    return theta  # add tolerances??
+
+
+# def is_mid_centre(mid_x, shape):
+#     centre_x = shape / 2
+#     tolerance = shape / 24
+#     return abs(mid_x - centre_x) <= tolerance
 
 
 pipeline = rs.pipeline()
@@ -60,15 +68,19 @@ while True:
     if not colour_frame:
         continue
 
-    count += 1
-    if count % 2 == 0:
-        continue
-
     colour_image = np.asanyarray(colour_frame.get_data())
     print("Image captured")
     results = model.predict(colour_image, conf=0.75)
     annotated_frame = results[0].plot()
     boxes = results[0].boxes.cpu().numpy()
+
+    cv.namedWindow('RealSense', cv.WINDOW_AUTOSIZE)
+    cv.imshow('Realsense', annotated_frame)
+    cv.waitKey(1)
+
+    count += 1
+    if count % 2 == 0:
+        continue
 
     if len(boxes) != 0:
         box = boxes[0]
@@ -81,9 +93,11 @@ while True:
             print('success!')
             d = distances(ctr)
             ang = round(angle(d), 4)
-            print(ang)
-            annotated_frame = cv.putText(annotated_frame, str(ang), (50, 50), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 1)
-
+            # midpoint_x = (d[0][0] + d[1][0]) // 2
+            # img_width = colour_image.shape[1]
+            # aligned = is_mid_centre(midpoint_x, img_width)  # consider adding tolerance-specifc function
+            annotated_frame = cv.putText(annotated_frame, str(ang), (50, 50), cv.FONT_HERSHEY_SIMPLEX, 1,
+                                         (0, 0, 255), 1)
     else:
         print('no detection :(')
 
@@ -95,3 +109,4 @@ while True:
 #  need to figure out how to stream all frames but only detect every other frame
 #  add threshold for objectiveness and circular
 #  use ratio instead of radius
+#  add tolerances for angles???
